@@ -12,7 +12,7 @@ trainer:
         name: tfsepnet_test
 
 # Path to the checkpoint of trained TF-SepNet
-ckpt_path: log/tfsepnet_train/version_*/checkpoints/***.ckpt
+ckpt_path: log/tfsepnet_train/version_82/checkpoints/epoch=56-val_acc=0.9951.ckpt
 
 model:
   class_path: model.lit_asc.LitAcousticSceneClassificationSystem
@@ -39,10 +39,10 @@ model:
 data:
   class_path: data.data_module.DCASEDataModule
   init_args:
-    meta_dir: data/meta_dcase_2024
-    audio_dir: ../TAU-urban-acoustic-scenes-2022-mobile-development/development
-    batch_size: 256
-    num_workers: 8
+    meta_dir: data/ANDERS
+    audio_dir: ../content_detection
+    batch_size: 64
+    num_workers: 12
     pin_memory: true
     sampling_rate: 32000
     test_subset: test

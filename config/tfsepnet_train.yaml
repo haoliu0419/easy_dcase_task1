@@ -71,13 +71,13 @@ data:
   # Wrapped data module of train, valid, test DataLoaders
   class_path: data.data_module.DCASEDataModule
   init_args:
-    meta_dir: data/meta_dcase_2024
-    audio_dir: ../TAU-urban-acoustic-scenes-2022-mobile-development/development
-    batch_size: 256
-    num_workers: 8
+    meta_dir: data/ANDERS
+    audio_dir: ../content_detection
+    batch_size: 64
+    num_workers: 12
     pin_memory: true
     sampling_rate: 32000
-    train_subset: split5
+    train_subset: train
 
 optimizer:
   class_path: torch.optim.Adam

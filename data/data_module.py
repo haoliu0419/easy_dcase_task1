@@ -18,12 +18,15 @@ class AudioDataset(Dataset):
         subset (str): Name of required meta file. e.g. ``train``, ``valid``, ``test``...
         sampling_rate (int): Sampling rate of waveforms.
     """
-    def __init__(self, meta_dir: str, audio_dir: str, subset: str, sampling_rate: int = 16000):
+
+    def __init__(
+        self, meta_dir: str, audio_dir: str, subset: str, sampling_rate: int = 16000
+    ):
         self.meta_dir = meta_dir
         self.audio_dir = audio_dir
         self.subset = subset
         self.sr = sampling_rate
-        self.meta_subset = pd.read_csv(f"{self.meta_dir}/{self.subset}.csv", sep='\t')
+        self.meta_subset = pd.read_csv(f"{self.meta_dir}/{self.subset}.csv", sep="\t")
 
     def __len__(self):
         return len(self.meta_subset)
@@ -49,23 +52,26 @@ class AudioLabelsDataset(AudioDataset):
         subset (str): Name of required meta file. e.g. ``train``, ``valid``, ``test``...
         sampling_rate (int): Sampling rate of waveforms.
     """
-    def __init__(self, meta_dir: str, audio_dir: str, subset: str, sampling_rate: int = 16000):
+
+    def __init__(
+        self, meta_dir: str, audio_dir: str, subset: str, sampling_rate: int = 16000
+    ):
         super().__init__(meta_dir, audio_dir, subset, sampling_rate)
 
     def __getitem__(self, i):
         # Get the filename
         wav, filename = super().__getitem__(i)
-        scene_label = filename.split('/')[-1].split('-')[0]
-        device_label = filename.split('-')[-1].split('.')[0]
-        city_label = filename.split('-')[1]
+        scene_label = filename.split("/")[-1].split("-")[0]
+        device_label = "a"  # filename.split('-')[-1].split('.')[0]
+        city_label = "stockholm"  # filename.split('-')[1]
         # Encode the scene labels from string to integers
-        scene_label = unique_labels['scene'].index(scene_label)
+        scene_label = unique_labels["scene"].index(scene_label)
         scene_label = torch.from_numpy(np.array(scene_label, dtype=np.int64))
         # Encode the device labels from string to integers
-        device_label = unique_labels['device'].index(device_label)
+        device_label = unique_labels["device"].index(device_label)
         device_label = torch.from_numpy(np.array(device_label, dtype=np.int64))
         # Encode the city labels from string to integers
-        city_label = unique_labels['city'].index(city_label)
+        city_label = unique_labels["city"].index(city_label)
         city_label = torch.from_numpy(np.array(city_label, dtype=np.int64))
         return wav, scene_label, device_label, city_label
 
@@ -77,6 +83,7 @@ class AudioLabelsDatasetWithLogits(AudioLabelsDataset):
     Args:
         logits_files (list): List of directories of teacher logits. e.g. ["path/to/logit/predictions.pt", ...]
     """
+
     def __init__(self, logits_files: list, **kwargs):
         super().__init__(**kwargs)
         logits_all = []
@@ -108,8 +115,20 @@ class DCASEDataModule(L.LightningDataModule):
         test_subset (str): Name of test meta file.
         predict_subset (str): Name of predict meta file.
     """
-    def __init__(self, meta_dir: str, audio_dir: str, batch_size: int = 16, num_workers: int = 0, pin_memory: bool=False,
-                 logits_files=None, train_subset="train", test_subset="test", predict_subset="test", **kwargs):
+
+    def __init__(
+        self,
+        meta_dir: str,
+        audio_dir: str,
+        batch_size: int = 16,
+        num_workers: int = 0,
+        pin_memory: bool = False,
+        logits_files=None,
+        train_subset="train",
+        test_subset="test",
+        predict_subset="test",
+        **kwargs,
+    ):
         super().__init__()
         self.meta_dir = meta_dir
         self.audio_dir = audio_dir
@@ -127,29 +146,68 @@ class DCASEDataModule(L.LightningDataModule):
         if stage == "fit":
             # Add teacher logits to the dataset if using knowledge distillation
             if self.logits_files is not None:
-                self.train_set = AudioLabelsDatasetWithLogits(logits_files=self.logits_files, meta_dir=self.meta_dir, audio_dir=self.audio_dir, subset=self.train_subset, **self.kwargs)
+                self.train_set = AudioLabelsDatasetWithLogits(
+                    logits_files=self.logits_files,
+                    meta_dir=self.meta_dir,
+                    audio_dir=self.audio_dir,
+                    subset=self.train_subset,
+                    **self.kwargs,
+                )
             else:
-                self.train_set = AudioLabelsDataset(self.meta_dir, self.audio_dir, subset=self.train_subset, **self.kwargs)
-            self.valid_set = AudioLabelsDataset(self.meta_dir, self.audio_dir, subset="valid", **self.kwargs)
+                self.train_set = AudioLabelsDataset(
+                    self.meta_dir,
+                    self.audio_dir,
+                    subset=self.train_subset,
+                    **self.kwargs,
+                )
+            self.valid_set = AudioLabelsDataset(
+                self.meta_dir, self.audio_dir, subset="valid", **self.kwargs
+            )
         if stage == "validate":
-            self.valid_set = AudioLabelsDataset(self.meta_dir, self.audio_dir, subset="valid", **self.kwargs)
+            self.valid_set = AudioLabelsDataset(
+                self.meta_dir, self.audio_dir, subset="valid", **self.kwargs
+            )
         if stage == "test":
-            self.test_set = AudioLabelsDataset(self.meta_dir, self.audio_dir, subset=self.test_subset, **self.kwargs)
+            self.test_set = AudioLabelsDataset(
+                self.meta_dir, self.audio_dir, subset=self.test_subset, **self.kwargs
+            )
         if stage == "predict":
-            self.predict_set = AudioDataset(self.meta_dir, self.audio_dir, subset=self.predict_subset, **self.kwargs)
+            self.predict_set = AudioDataset(
+                self.meta_dir, self.audio_dir, subset=self.predict_subset, **self.kwargs
+            )
 
     def train_dataloader(self):
-        return DataLoader(self.train_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=True,
-                          pin_memory=self.pin_memory)
+        return DataLoader(
+            self.train_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=True,
+            pin_memory=self.pin_memory,
+        )
 
     def val_dataloader(self):
-        return DataLoader(self.valid_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                          pin_memory=self.pin_memory)
+        return DataLoader(
+            self.valid_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=self.pin_memory,
+        )
 
     def test_dataloader(self):
-        return DataLoader(self.test_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                          pin_memory=self.pin_memory)
+        return DataLoader(
+            self.test_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=self.pin_memory,
+        )
 
     def predict_dataloader(self):
-        return DataLoader(self.predict_set, batch_size=self.batch_size, num_workers=self.num_workers, shuffle=False,
-                          pin_memory=self.pin_memory)
+        return DataLoader(
+            self.predict_set,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            shuffle=False,
+            pin_memory=self.pin_memory,
+        )

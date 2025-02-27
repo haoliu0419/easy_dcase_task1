@@ -1,3 +1,11 @@
+# repo specific
+TAU-urban-acoustic-scenes-2022-mobile-development/
+microphone_impulse_response/
+log/
+MNIST/
+lightning_logs/
+pred/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

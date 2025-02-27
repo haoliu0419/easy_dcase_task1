@@ -5,7 +5,7 @@ from util.static_variable import unique_labels
 
 
 def make_markdown_table(array):
-    """ Convert the array-like classification report into a markdown table """
+    """Convert the array-like classification report into a markdown table"""
 
     nl = "\n"
 
@@ -29,14 +29,15 @@ class ClassificationSummary:
         class_label (str): Class label. (default: ``scene``)
         domain_label (str): Domain label. (default: ``device``)
     """
-    def __init__(self, class_label='scene', domain_label='device'):
+
+    def __init__(self, class_label="scene", domain_label="device"):
         self.class_labels = unique_labels[class_label]
         self.domain_labels = unique_labels[domain_label]
 
     def get_table_report(self, inputs):
-        _y_true = inputs['y']
-        _y_pred = inputs['pred']
-        _d_indices = inputs['d']
+        _y_true = inputs["y"]
+        _y_pred = inputs["pred"]
+        _d_indices = inputs["d"]
         # Convert device indices to device labels
         d = [self.domain_labels[i] for i in _d_indices]
         # Create a dictionary to store the class-wise accuracy for each domain
@@ -61,7 +62,9 @@ class ClassificationSummary:
             class_ttl_acc = 0.0
             for domain_label in self.domain_labels:
                 if class_index in domain_class_accuracy[domain_label]:
-                    row.append(f"{domain_class_accuracy[domain_label][class_index] * 100:.1f}")
+                    row.append(
+                        f"{domain_class_accuracy[domain_label][class_index] * 100:.1f}"
+                    )
                     class_ttl_acc += domain_class_accuracy[domain_label][class_index]
                 else:
                     row.append("N/A")
@@ -70,7 +73,7 @@ class ClassificationSummary:
         # Add a row that shows the macro average accuracy across all domains and class_labels
         num_classes = len(self.class_labels)
         total_accuracy = 0.0
-        domain_avg_row = ['Domain Avg.']
+        domain_avg_row = ["Domain Avg."]
         for domain_label in self.domain_labels:
             domain_accuracy = 0.0
             domain_class_count = 0
@@ -83,42 +86,49 @@ class ClassificationSummary:
                 total_accuracy += domain_accuracy
             else:
                 domain_accuracy = "N/A"
-            domain_avg_row.append(f"{domain_accuracy * 100:.1f}")
+            # domain_avg_row.append(f"{domain_accuracy * 100:.1f}")
+            domain_avg_row.append(f"{domain_accuracy * 100}")
         total_accuracy /= len(self.domain_labels)
         classification_report.append(domain_avg_row + [f"{total_accuracy * 100:.1f}"])
         markdown = make_markdown_table(classification_report)
         return markdown
 
     def get_confusion_matrix(self, inputs):
-        _y_true = inputs['y']
-        _y_pred = inputs['pred']
+        _y_true = inputs["y"]
+        _y_pred = inputs["pred"]
         # Compute confusion matrix
         cm = confusion_matrix(_y_true, _y_pred)
         # Convert to probability confusion matrix
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
         fig, ax = plt.subplots(figsize=(8, 8))
-        for item in ([ax.title, ax.xaxis.label, ax.yaxis.label] +
-                     ax.get_xticklabels() + ax.get_yticklabels()):
+        for item in (
+            [ax.title, ax.xaxis.label, ax.yaxis.label]
+            + ax.get_xticklabels()
+            + ax.get_yticklabels()
+        ):
             item.set_fontsize(20)
-        im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+        im = ax.imshow(cm, interpolation="nearest", cmap=plt.cm.Blues)
         ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         # We want to show all ticks...
-        ax.set(xticks=np.arange(cm.shape[1]),
-               yticks=np.arange(cm.shape[0]))
-        ax.set_xticklabels(self.class_labels, fontsize=12)
-        ax.set_yticklabels(self.class_labels, fontsize=12)
-        ax.set_ylabel('True label')
-        ax.set_xlabel('Predicted label')
+        ax.set(xticks=np.arange(cm.shape[1]), yticks=np.arange(cm.shape[0]))
+        # ax.set_xticklabels(self.class_labels, fontsize=12)
+        # ax.set_yticklabels(self.class_labels, fontsize=12)
+        ax.set_ylabel("True label")
+        ax.set_xlabel("Predicted label")
         # Rotate the tick labels and set their alignment.
-        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
-                 rotation_mode="anchor")
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
         # Loop over data dimensions and create text annotations.
-        fmt = '.2f'
-        thresh = cm.max() / 2.
+        fmt = ".2f"
+        thresh = cm.max() / 2.0
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
-                ax.text(j, i, format(cm[i, j], fmt),
-                        ha="center", va="center",
-                        color="white" if cm[i, j] > thresh else "black")
+                ax.text(
+                    j,
+                    i,
+                    format(cm[i, j], fmt),
+                    ha="center",
+                    va="center",
+                    color="white" if cm[i, j] > thresh else "black",
+                )
         fig.tight_layout()
         return fig
